@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import 'models/student.dart';
+import 'screens/add_student_page.dart';
+import 'screens/student_details_page.dart';
+
+void main() {
+  runApp(const StudentInformationSystem());
+}
+
+class StudentInformationSystem extends StatelessWidget {
+  const StudentInformationSystem({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Student Information System',
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Student> students = [
+    Student(
+      id: 1,
+      name: 'Juan Dela Cruz',
+      course: 'BS Information Technology',
+      yearLevel: 2,
+      email: 'juan@example.com',
+    ),
+    Student(
+      id: 2,
+      name: 'Maria Santos',
+      course: 'BS Information Technology',
+      yearLevel: 1,
+      email: 'maria@example.com',
+    ),
+  ];
+
+  final searchController = TextEditingController();
+
+  List<Student> filteredStudents = [];
+  @override
+  void initState() {
+    super.initState();
+    filteredStudents = students;
+  }
+
+  // Search students by name
+  void searchStudents(String query) {
+    setState(() {
+      filteredStudents = students.where((student) {
+        return student.name
+            .toLowerCase()
+            .contains(query.toLowerCase());
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Student Information System'),
+      ),
+
+      // SEARCH BAR + STUDENT LIST
+      body: Column(
+        children: [
+          // Search field
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: searchController,
+              onChanged: searchStudents,
+              decoration: const InputDecoration(
+                labelText: 'Search Student',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+
+          // Student list
+          Expanded(
+            child: ListView.builder(
+              itemCount: filteredStudents.length,
+              itemBuilder: (context, index) {
+                final student = filteredStudents[index];
+
+                return ListTile(
+                  leading: const Icon(Icons.person),
+
+                  title: Text(student.name),
+
+                  subtitle: Text(student.course),
+
+                  // DELETE BUTTON
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        students.removeWhere(
+                          (item) => item.id == student.id,
+                        );
+
+                        filteredStudents.removeWhere(
+                          (item) => item.id == student.id,
+                        );
+                      });
+                    },
+                  ),
+
+                  // VIEW STUDENT DETAILS
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StudentDetailsPage(
+                          student: student,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+
+      // ADD STUDENT BUTTON
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final newStudent = await Navigator.push<Student>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddStudentPage(),
+            ),
+          );
+
+          if (newStudent != null) {
+            setState(() {
+              students.add(newStudent);
+              filteredStudents = students;
+            });
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
